@@ -1,0 +1,29 @@
+# --- Core: web app + imagery pipeline --------------------------------------
+numpy>=1.24
+pillow>=10.0
+tifffile>=2023.7.10
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9      # required by FastAPI for file uploads
+
+# --- Model: Hugging Face vision-language stack -----------------------------
+# transformers pulls the Qwen3-VL classes; peft applies the LoRA adapter;
+# accelerate handles device placement and sharded loading.
+transformers>=4.51
+peft>=0.11
+accelerate>=0.30
+huggingface_hub>=0.23
+safetensors>=0.4
+
+# PyTorch is NOT listed here on purpose. The right wheel depends on your CUDA
+# version, and pip will otherwise install a CPU-only build on a GPU machine.
+# Install it first, from https://pytorch.org/get-started/locally/
+#   CUDA 12.1: pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   CPU only : pip install torch
+
+# --- Recommended -----------------------------------------------------------
+rasterio>=1.3        # CRS + ground sample distance; without it, areas stay in pixels
+scipy>=1.11          # exact, fast connected-component labelling for region counts
+
+# --- Optional --------------------------------------------------------------
+# bitsandbytes>=0.43   # HF_LOAD_IN_4BIT=1 support (CUDA only)

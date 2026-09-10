@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SatQuery AI — ask questions about satellite imagery</title>
+<meta name="description" content="An interactive vision-language assistant for multimodal remote-sensing image analysis through text queries.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ===================================================== nav ========= -->
+  <header class="topbar">
+    <a class="brand" href="#/" data-link>
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="6.5" stroke="#35e0ff" stroke-width="1.6"/>
+        <ellipse cx="16" cy="16" rx="14" ry="5.5" stroke="#ffb347"
+                 stroke-width="1.2" transform="rotate(-28 16 16)" opacity=".85"/>
+        <circle cx="27" cy="10" r="2.1" fill="#ff3ea5"/>
+      </svg>
+      SatQuery&nbsp;AI
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#/"       data-link>Home</a>
+      <a href="#/console" data-link>Console</a>
+      <a href="#/model"   data-link>Model</a>
+      <a href="#/guide"   data-link>Guide</a>
+      <a href="/api/docs" target="_blank" rel="noopener">API</a>
+    </nav>
+  </header>
+
+  <!-- <div class="telemetry" id="telemetry">
+    <span id="model-state" class="state-loading"><i class="pip"></i>MODEL <b>CHECKING…</b></span>
+    <span>REPO <b id="model-repo">—</b></span>
+    <span>DEVICE <b id="model-device">—</b></span>
+    <span>INDEX ENGINE <b>NDVI · NDWI · MNDWI · NDBI</b></span>
+  </div> -->
+
+  <main id="pages">
+
+    <!-- ================================================ landing ======== -->
+    <section class="page" id="page-home" data-page="/">
+      <div class="hero">
+        <div class="hero-copy">
+          <h1 data-anim="hero">Ask a satellite image what it is looking at.</h1>
+          <p class="lede" data-anim="hero">
+            SatQuery routes your question to the right workflow, runs a fine-tuned
+            vision-language model over the imagery, measures the pixels itself,
+            and hands back an answer you can check line by line.
+          </p>
+          <div class="hero-actions" data-anim="hero">
+            <a class="btn btn-primary" href="#/console" data-link>Open the console</a>
+            <a class="btn" href="#/guide" data-link>How it works</a>
+          </div>
+        </div>
+
+        <div class="scan-wrap" data-anim="hero">
+          <!-- The one animated moment on the page: an orbital pass, drawn once
+               on load. Ground nodes light up in sequence as the swath crosses. -->
+          <svg class="scan" viewBox="0 0 440 400" role="img"
+               aria-label="Illustration of a satellite scanning a ground track">
+            <path class="terrain" id="scan-terrain"
+                  d="M40 300 L92 268 L138 288 L188 250 L242 276 L296 244 L352 272 L400 250
+                     L400 340 L40 340 Z"/>
+            <path class="limb" id="scan-limb"
+                  d="M18 236 C 110 128, 330 128, 422 236"/>
+            <path class="swath" id="scan-swath"
+                  d="M18 268 C 110 166, 330 166, 422 268"/>
+
+            <g id="scan-beams">
+              <line class="beam" x1="220" y1="120" x2="92"  y2="268"/>
+              <line class="beam" x1="220" y1="120" x2="188" y2="250"/>
+              <line class="beam" x1="220" y1="120" x2="296" y2="244"/>
+              <line class="beam" x1="220" y1="120" x2="352" y2="272"/>
+            </g>
+
+            <g id="scan-nodes">
+              <circle class="node"    cx="92"  cy="268" r="3.4"/>
+              <circle class="node"    cx="188" cy="250" r="3.4"/>
+              <circle class="node-hi" cx="296" cy="244" r="4.2"/>
+              <circle class="node"    cx="352" cy="272" r="3.4"/>
+            </g>
+
+            <g transform="translate(220 120)">
+              <g id="scan-sat">
+                <rect class="sat" x="-7" y="-5" width="14" height="10" rx="1.5"/>
+                <rect class="sat" x="-24" y="-2.5" width="14" height="5" rx="1" opacity=".8"/>
+                <rect class="sat" x="10"  y="-2.5" width="14" height="5" rx="1" opacity=".8"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="strip">
+        <div data-anim="stagger">
+          <i class="marker"></i>
+          <h3>Single image</h3>
+          <p>Ask what a scene contains. You get the model's reading plus a measured
+             land-cover breakdown in pixels and percent.</p>
+        </div>
+        <div data-anim="stagger">
+          <i class="marker"></i>
+          <h3>Change detection</h3>
+          <p>Two dates, one area. Changed pixels, changed area, and distinct
+             regions are counted from the imagery, not narrated.</p>
+        </div>
+        <div data-anim="stagger">
+          <i class="marker"></i>
+          <h3>Optical + SAR</h3>
+          <p>Radar sees through what optical cannot. Where the two sensors agree
+             is where a detection is worth trusting.</p>
+        </div>
+        <div data-anim="stagger">
+          <i class="marker"></i>
+          <h3>Visible working</h3>
+          <p>Every run shows its execution trace: which workflow ran, what was
+             measured, and which half of the answer came from the model.</p>
+        </div>
+      </div>
+
+      <div class="claim" data-anim="stagger">
+        <p>A model may describe a change. It may not measure one.</p>
+        <p>Semantic content — what the scene is, which classes are present —
+           comes from the fine-tuned model. Every number comes from NumPy,
+           computed on your actual pixels. The two are never blended, and each
+           answer says which part came from where. If the model fails to load,
+           the measurements survive intact and the answer tells you so.</p>
+      </div>
+
+      <div class="hero-actions" data-anim="stagger">
+        <a class="btn btn-primary" href="#/console" data-link>Analyse an image</a>
+        <a class="btn" href="#/model" data-link>Check model status</a>
+      </div>
+    </section>
+
+    <!-- ================================================ console ======== -->
+    <section class="page" id="page-console" data-page="/console">
+      <div class="grid-console">
+
+        <form class="panel" id="analysis-form" data-anim="stagger">
+          <h2>Run an analysis</h2>
+          <p class="sub">Pick a workflow, add imagery, ask a question.</p>
+
+          <div class="field">
+            <label id="mode-label">Workflow</label>
+            <div class="modes" id="modes" role="group" aria-labelledby="mode-label"></div>
+            <p class="sub" id="mode-blurb" style="margin:10px 0 0"></p>
+          </div>
+
+          <div class="field">
+            <label>Imagery</label>
+            <div class="drops" id="drops"></div>
+          </div>
+
+          <div class="field">
+            <label for="band-preset">Band layout of your source</label>
+            <select id="band-preset"></select>
+          </div>
+
+          <div class="field">
+            <label for="query">Question</label>
+            <textarea id="query" rows="3"
+                      placeholder="Ask something about the satellite image…"></textarea>
+            <div class="examples" id="examples"></div>
+          </div>
+
+          <button class="btn btn-primary" type="submit" id="run" style="width:100%">
+            <span id="run-label">Analyze</span>
+          </button>
+        </form>
+
+        <div class="stack">
+          <section class="panel" id="results-panel" data-anim="stagger">
+            <h2>Results</h2>
+            <p class="sub" id="results-sub">Nothing analysed yet.</p>
+
+            <div id="results-empty" class="empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.4" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M3 15l5-5 4 4 3-3 6 6"/>
+                <circle cx="8.5" cy="8.5" r="1.6"/>
+              </svg>
+              <p>Upload imagery and ask a question. Results, measured values,
+                 and the execution trace appear here.</p>
+            </div>
+
+            <div id="results-body" hidden>
+              <div class="verdict" id="verdict"></div>
+              <pre class="answer" id="answer"></pre>
+              <div class="labels" id="labels"></div>
+            </div>
+          </section>
+
+          <section class="panel panel--change" id="evidence-panel" data-anim="stagger" hidden>
+            <h2>Visual evidence</h2>
+            <p class="sub" id="evidence-sub"></p>
+            <img class="evidence" id="evidence" alt="Analysis evidence panels">
+          </section>
+
+          <section class="panel panel--quiet" id="detail-panel" data-anim="stagger" hidden>
+            <h2>Measured values</h2>
+            <p class="sub">Computed from your pixels with NumPy, not written by a model.</p>
+            <pre class="readout" id="measurements"></pre>
+
+            <details class="drawer">
+              <summary>Execution trace</summary>
+              <ul class="trace" id="trace"></ul>
+            </details>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================== model ======== -->
+    <section class="page" id="page-model" data-page="/model">
+      <div class="stack">
+        <section class="panel" data-anim="stagger">
+          <h2>Vision-language model</h2>
+          <p class="sub">
+            The model runs in this process. Weights load in the background on
+            startup, so the console is usable before loading finishes.
+          </p>
+          <table class="spec">
+            <tbody>
+              <tr><th>State</th>       <td id="m-state">—</td></tr>
+              <tr><th>Repository</th>  <td id="m-repo">—</td></tr>
+              <tr><th>Base model</th>  <td id="m-base">—</td></tr>
+              <tr><th>Device</th>      <td id="m-device">—</td></tr>
+              <tr><th>Precision</th>   <td id="m-dtype">—</td></tr>
+              <tr><th>Token</th>       <td id="m-token">—</td></tr>
+              <tr><th>Load time</th>   <td id="m-load">—</td></tr>
+            </tbody>
+          </table>
+          <button class="btn" id="reload-model" type="button">Start or retry loading</button>
+        </section>
+
+        <section class="panel panel--radar" data-anim="stagger">
+          <h2>Load progress</h2>
+          <p class="sub" id="m-message">—</p>
+          <pre class="readout" id="m-progress"></pre>
+        </section>
+
+        <section class="panel panel--quiet prose" data-anim="stagger">
+          <h2>Configuration</h2>
+          <p>Everything is read from <code>.env</code> beside <code>app.py</code>.
+             That file is git-ignored, so your token never enters version control.</p>
+<pre><code>HF_MODEL_ID=aanandmodi/satquery-qwen3vl-bigearthnet-txt-lora
+HF_TOKEN=hf_your_new_token_here
+HF_LOAD_IN_4BIT=1        # if your GPU has under ~16 GB
+HF_DEVICE=auto           # auto | cuda | mps | cpu</code></pre>
+          <p>Check the setup without starting the server:</p>
+<pre><code>python tools/test_model.py --verbose</code></pre>
+        </section>
+      </div>
+    </section>
+
+    <!-- ================================================== guide ======== -->
+    <section class="page" id="page-guide" data-page="/guide">
+      <div class="panel prose" data-anim="stagger">
+        <h2>What happens when you press Analyze</h2>
+        <ol>
+          <li><strong>Input validation</strong> checks format, band count, and whether
+              a pair covers the same footprint. Mismatched sizes are resampled;
+              mismatched projections are refused, because resampling across them
+              would misregister every pixel.</li>
+          <li><strong>The router</strong> classifies your question into one of six
+              tasks and picks the workflow that fits the images you supplied.</li>
+          <li><strong>The vision-language model</strong> is asked for semantics —
+              what the scene is.</li>
+          <li><strong>NumPy</strong> computes every number: pixel counts, changed
+              area, region counts, class breakdowns.</li>
+          <li><strong>The synthesizer</strong> assembles the answer and labels which
+              part came from where.</li>
+        </ol>
+
+        <h2>Two kinds of confidence</h2>
+        <p>When the model answers, SatQuery reports <strong>generation
+           confidence</strong>: the mean probability the decoder assigned to the
+           tokens it actually produced. That is a real measurement of how sure the
+           model was of its own wording. It is <em>not</em> a class probability, and
+           the interface never relabels it as one.</p>
+        <p>When the local specialists answer instead, the confidence shown is a
+           heuristic derived from how dominant the leading land-cover class is.
+           The results panel says which kind you are looking at.</p>
+
+        <h2>Band layout changes the answer</h2>
+        <p>Land-cover classes are defined by spectral indices, not by colour.
+           Without a NIR or SWIR band, shadow reads as water and bright soil reads
+           as buildings. On the built-in benchmark, supplying the correct band
+           roles moves overall accuracy from 64.8% to 93.8%.</p>
+        <p>If you leave the preset unset, SatQuery falls back to RGB colour proxies
+           and says so in the trace rather than guessing silently.</p>
+
+        <h2>Supported inputs</h2>
+        <table class="spec">
+          <thead><tr><th>Workflow</th><th>Input</th><th>Evidence panels</th></tr></thead>
+          <tbody>
+            <tr><td>Single image</td><td>One GeoTIFF, TIFF, PNG or JPEG</td>
+                <td>Original · Classification</td></tr>
+            <tr><td>Change detection</td><td>Two dates, same area</td>
+                <td>T1 · T2 · Difference · Change mask</td></tr>
+            <tr><td>Optical + SAR</td><td>Co-registered optical and radar</td>
+                <td>Optical · SAR · Structure · Fused</td></tr>
+          </tbody>
+        </table>
+
+        <h2>When the model is unavailable</h2>
+        <p>Loading a multi-billion-parameter model needs disk, memory, and usually
+           a GPU. If it cannot load — no token, gated repo, out of memory, no
+           PyTorch — the console keeps working on local specialists and marks the
+           answer <code>Source: local specialist</code>. Nothing is fabricated to
+           fill the gap, and every measured number is unaffected.</p>
+
+        <h2>API</h2>
+        <p>The same functionality is available as JSON. Interactive docs are at
+           <a href="/api/docs" target="_blank" rel="noopener">/api/docs</a>.</p>
+<pre><code>curl -X POST http://127.0.0.1:8000/api/analyze \
+  -F mode=single \
+  -F "query=What is present in this image?" \
+  -F image_a=@scene.tif</code></pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

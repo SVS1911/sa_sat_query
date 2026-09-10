@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+reports/
+data/captioning/
+models/*.json
+*.ckpt
+*.pt
+*.pth
+
+# Secrets. The Hugging Face token lives here and must never be committed.
+# .env.example is the checked-in template.
+.env
+.env.local
+
+# Model weight cache
+.cache/
+hf_cache/
