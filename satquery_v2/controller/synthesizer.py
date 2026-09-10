@@ -103,8 +103,8 @@ def compose(
         blocks.append("MEASURED FROM THE IMAGE\n" + "\n".join(f"  {line}" for line in measurement_lines))
     if model_lines:
         blocks.append("TRAINED MODEL OUTPUT\n" + "\n".join(f"  {line}" for line in model_lines))
-    if notes:
-        blocks.append("NOTES\n" + "\n".join(f"  {note}" for note in notes))
+    # if notes:
+    #     blocks.append("NOTES\n" + "\n".join(f"  {note}" for note in notes))
     if provenance:
         blocks.append(provenance)
 
